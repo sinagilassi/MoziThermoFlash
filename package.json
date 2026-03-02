@@ -1,0 +1,27 @@
+{
+  "name": "mozithermoflash",
+  "version": "1.0.0",
+  "description": "TS",
+  "homepage": "https://github.com/sinagilassi/MoziThermoFlash#readme",
+  "bugs": {
+    "url": "https://github.com/sinagilassi/MoziThermoFlash/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sinagilassi/MoziThermoFlash.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "mozithermodb": "^1.3.0",
+    "mozithermodb-settings": "^1.1.4"
+  }
+}
