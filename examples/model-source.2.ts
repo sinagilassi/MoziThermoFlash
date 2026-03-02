@@ -1,87 +1,102 @@
-// Example: mixture-only modelSource and multiple mixture data extraction methods
-import { type Component, ComponentSchema } from "mozithermodb-settings";
-import type { RawThermoRecord } from "mozithermodb";
-import { buildBinaryMixtureData, MoziMatrixData } from "mozithermodb";
-import { mkmat, Source } from "mozithermodb";
+import { ComponentSchema, type Component } from "mozithermodb-settings";
+import {
+  buildComponentsData,
+  buildComponentsEquation,
+  createEq,
+  type ModelSource,
+  type RawThermoRecord,
+} from "mozithermodb";
 
-// NOTE: components
-const methanol = ComponentSchema.parse({
-    name: "Methanol",
-    formula: "CH3OH",
-    state: "l"
+const water = ComponentSchema.parse({
+  name: "water",
+  formula: "H2O",
+  state: "l",
 });
 
 const ethanol = ComponentSchema.parse({
-    name: "Ethanol",
-    formula: "C2H5OH",
-    state: "l"
+  name: "ethanol",
+  formula: "C2H6O",
+  state: "l",
 });
 
-const mixture: Component[] = [methanol, ethanol];
+const components: Component[] = [water, ethanol];
 
-// SECTION: matrix rows (one row per component for the same binary mixture)
-const methanolRow: RawThermoRecord[] = [
-    { name: "Mixture", symbol: "-", value: "Methanol | Ethanol", unit: "N/A" },
-    { name: "Name", symbol: "-", value: "Methanol", unit: "N/A" },
-    { name: "Formula", symbol: "-", value: "CH3OH", unit: "N/A" },
-    { name: "State", symbol: "-", value: "l", unit: "N/A" },
-    { name: "a_i_j_1", symbol: "a_i_j_1", value: 0, unit: "1" },
-    { name: "a_i_j_2", symbol: "a_i_j_2", value: 1, unit: "1" },
-    { name: "b_i_j_1", symbol: "b_i_j_1", value: 4, unit: "1" },
-    { name: "b_i_j_2", symbol: "b_i_j_2", value: 5, unit: "1" }
+const waterData: RawThermoRecord[] = [
+  { name: "Name", symbol: "Name", value: "water", unit: "N/A" },
+  { name: "Formula", symbol: "Formula", value: "H2O", unit: "N/A" },
+  { name: "State", symbol: "State", value: "l", unit: "N/A" },
+  { name: "C1", symbol: "C1", value: 73.649, unit: "1" },
+  { name: "C2", symbol: "C2", value: -7258.2, unit: "1" },
+  { name: "C3", symbol: "C3", value: -7.3037, unit: "1" },
+  { name: "C4", symbol: "C4", value: 4.17e-6, unit: "1" },
+  { name: "C5", symbol: "C5", value: 2, unit: "1" },
 ];
 
-const ethanolRow: RawThermoRecord[] = [
-    { name: "Mixture", symbol: "-", value: "Methanol | Ethanol", unit: "N/A" },
-    { name: "Name", symbol: "-", value: "Ethanol", unit: "N/A" },
-    { name: "Formula", symbol: "-", value: "C2H5OH", unit: "N/A" },
-    { name: "State", symbol: "-", value: "l", unit: "N/A" },
-    { name: "a_i_j_1", symbol: "a_i_j_1", value: 2, unit: "1" },
-    { name: "a_i_j_2", symbol: "a_i_j_2", value: 3, unit: "1" },
-    { name: "b_i_j_1", symbol: "b_i_j_1", value: 6, unit: "1" },
-    { name: "b_i_j_2", symbol: "b_i_j_2", value: 7, unit: "1" }
+const ethanolData: RawThermoRecord[] = [
+  { name: "Name", symbol: "Name", value: "ethanol", unit: "N/A" },
+  { name: "Formula", symbol: "Formula", value: "C2H6O", unit: "N/A" },
+  { name: "State", symbol: "State", value: "l", unit: "N/A" },
+  { name: "C1", symbol: "C1", value: 73.304, unit: "1" },
+  { name: "C2", symbol: "C2", value: -7122.3, unit: "1" },
+  { name: "C3", symbol: "C3", value: -7.1424, unit: "1" },
+  { name: "C4", symbol: "C4", value: 2.89e-6, unit: "1" },
+  { name: "C5", symbol: "C5", value: 2, unit: "1" },
 ];
 
-const matrixData: RawThermoRecord[][] = [methanolRow, ethanolRow];
+const dataBlocks: RawThermoRecord[][] = [waterData, ethanolData];
 
-// SECTION: build a mixture-only model source
-const binaryMixtureData = buildBinaryMixtureData(mixture, matrixData);
-const modelSource = {
-    dataSource: binaryMixtureData,
-    equationSource: {}
+const vapourPressureEquation = createEq(
+  {},
+  {
+    C1: { name: "C1", symbol: "C1", unit: "1" },
+    C2: { name: "C2", symbol: "C2", unit: "1" },
+    C3: { name: "C3", symbol: "C3", unit: "1" },
+    C4: { name: "C4", symbol: "C4", unit: "1" },
+    C5: { name: "C5", symbol: "C5", unit: "1" },
+    T: { name: "temperature", symbol: "T", unit: "K" },
+  },
+  {
+    VaPr: { name: "vapor-pressure", symbol: "VaPr", unit: "Pa" },
+  },
+  (_params, args) => {
+    const T = args.T.value;
+    const value = Math.exp(
+      args.C1.value +
+        args.C2.value / T +
+        args.C3.value * Math.log(T) +
+        args.C4.value * T ** args.C5.value
+    );
+
+    return {
+      value,
+      unit: "Pa",
+      symbol: "VaPr",
+    };
+  },
+  "VaporPressure",
+  "Generalized vapor-pressure equation"
+);
+
+const datasource = buildComponentsData(
+  components,
+  dataBlocks,
+  ["Name-State"],
+  true,
+  "Name-State"
+);
+
+const equationsource = buildComponentsEquation(
+  components,
+  vapourPressureEquation,
+  dataBlocks,
+  ["Name-State"],
+  true,
+  "Name-State"
+);
+
+const model_source_: ModelSource = {
+  dataSource: datasource,
+  equationSource: equationsource,
 };
 
-console.log("Model source built (mixture only):", modelSource);
-console.log("Mixture ids:", Object.keys(modelSource.dataSource));
-
-// Optional: Source instance with mixture-only datasource contract
-const source = new Source(modelSource, "Name-Formula");
-console.log("Source datasource keys:", Object.keys(source.datasource));
-
-// SECTION: direct extraction from MoziMatrixData
-const mixtureId = `${methanol.name}|${ethanol.name}`;
-const aSrc: MoziMatrixData = binaryMixtureData[mixtureId]["a"];
-
-console.log("Mixture ID:", mixtureId);
-console.log("Property symbols for mixture:", Object.keys(binaryMixtureData[mixtureId]));
-
-console.log("a.getProperty(a_i_j, methanol):", aSrc.getProperty("a_i_j", methanol, mixtureId));
-console.log("a.getProperty(a_i_j, ethanol):", aSrc.getProperty("a_i_j", ethanol, mixtureId));
-
-console.log("a.getMatrixProperty(a_i_j, [methanol, ethanol]):", aSrc.getMatrixProperty("a_i_j", [methanol, ethanol], mixtureId));
-console.log("a.ij(a_1_2):", aSrc.ij("a_1_2", mixtureId));
-console.log("a.ijs(a | methanol | ethanol, Name):", aSrc.ijs("a | methanol | ethanol", "Name"));
-console.log("a.mat(a_methanol_ethanol):", aSrc.mat("a_methanol_ethanol", mixture));
-console.log("a.matDict(a_methanol_ethanol):", aSrc.matDict("a_methanol_ethanol", mixture));
-
-// SECTION: extraction via mkmat wrapper from modelSource
-const matSource = mkmat(mixture, modelSource, "Name-Formula");
-
-if (!matSource) {
-    console.log("Failed to create matrix source.");
-} else {
-    console.log("mkmat.mixtureIds():", matSource.mixtureIds());
-    console.log("mkmat.props():", matSource.props());
-    console.log("mkmat.ij(a_2_1):", matSource.ij("a_2_1", "methanol|ethanol"));
-    console.log("mkmat.mat(a_methanol_ethanol):", matSource.mat("a_methanol_ethanol", mixture, "methanol|ethanol"));
-}
+export { water, ethanol, components, datasource, equationsource, model_source_ };

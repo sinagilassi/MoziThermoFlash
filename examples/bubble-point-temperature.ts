@@ -1,129 +1,43 @@
-# import libs
-import os
-    from typing import List
-import pyThermoDB as ptdb
-import pyThermoLinkDB as ptdblink
-from pyThermoLinkDB import(
-    build_component_model_source,
-    build_components_model_source,
-    build_model_source
-)
-from pyThermoLinkDB.models import ComponentModelSource, ModelSource
-from pythermodb_settings.models import Component, Pressure, Temperature
-from pyThermoDB import build_component_thermodb_from_reference, ComponentThermoDB
-from rich import print
-# thermo flash
-import pyThermoFlash as ptf
-from pyThermoFlash.core import calc_bubble_point_temperature
-    from model_source import model_source_, datasource, equationsource
+import { VLE } from "../src/docs";
+import { calc_bubble_point_temperature } from "../src/core/main";
+import { type Component, type Pressure } from "mozithermodb-settings";
+import {
+  model_source_ as modelSource,
+  benzene,
+  toluene,
+} from "./model-source-1";
 
-# version
-print(ptf.__version__)
-print(ptdb.__version__)
-print(ptdblink.__version__)
+const components = ["benzene-l", "toluene-l"];
+const vle = new VLE(components, modelSource);
 
-# =======================================
-# #️⃣ THERMOFLASH CALCULATION
-# =======================================
-# SECTION: vle model
-# NOTE: components
-components = ['benzene-l', 'toluene-l']
+const activity_inputs = {
+  alpha: [[0, 0.3], [0.3, 0]],
+  a_ij: [[0.0, -2.885], [2.191, 0.0]],
+  b_ij: [[0.0, 1124], [-863.7, 0.0]],
+  c_ij: [[0.0, 0.0], [0.0, 0.0]],
+  d_ij: [[0.0, 0.0], [0.0, 0.0]],
+};
 
-# NOTE: model source
-model_source = {
-    'datasource': datasource,
-    'equationsource': equationsource
-}
+const inputs = {
+  mole_fraction: { "benzene-l": 0.26, "toluene-l": 0.74 },
+  pressure: [101.3, "kPa"] as [number, string],
+};
 
-# NOTE: init vle
-vle = ptf.vle(
-    components = components,
-    model_source = model_source
-)
-print(type(vle))
+const pressure: Pressure = { value: 101.3, unit: "kPa" };
+const coreComponents: Component[] = [
+  { ...benzene, mole_fraction: 0.26 },
+  { ...toluene, mole_fraction: 0.74 },
+];
 
-# NOTE: check sources
-print(vle.datasource)
-print(vle.equationsource)
+console.log("bubble temperature (raoult)");
+console.log(vle.bubble_temperature(inputs, "raoult"));
 
-# SECTION: bubble - temperature point calculation
-# alpha(Binary Interaction Parameter)
-alpha = [
-    [0, 0.3],
-    [0.3, 0]
-]
-# a_ij
-a_ij = [
-    [0.0, -2.885],
-    [2.191, 0.0]
-]
-# b_ij
-b_ij = [
-    [0.0, 1124],
-    [-863.7, 0.0]
-]
-# c_ij
-c_ij = [
-    [0.0, 0.0],
-    [0.0, 0.0]
-]
-# d_ij
-d_ij = [
-    [0.0, 0.0],
-    [0.0, 0.0]
-]
-# NOTE: activity model
-activity_inputs = {
-    'alpha': alpha,
-    'a_ij': a_ij,
-    'b_ij': b_ij,
-    'c_ij': c_ij,
-    'd_ij': d_ij
-}
+console.log("bubble temperature (core wrapper)");
+console.log(calc_bubble_point_temperature(coreComponents, pressure, modelSource));
 
-# NOTE: inputs
-inputs = {
-    'mole_fraction': { 'benzene-l': 0.26, 'toluene-l': 0.74 },
-    'pressure': [101.3, 'kPa'],
-}
-
-pressure = Pressure(
-    value = 101.3,
-    unit = 'kPa'
-)
-benzene = Component(
-    name = 'benzene',
-    formula = 'C6H6',
-    state = 'l',
-    mole_fraction = 0.26
-)
-toluene = Component(
-    name = 'toluene',
-    formula = 'C7H8',
-    state = 'l',
-    mole_fraction = 0.74
-)
-
-# SECTION: bubble - point temperature calculation
-# NOTE: raoult's law
-res_bp = vle.bubble_temperature(
-    inputs = inputs,
-    equilibrium_model = 'raoult'
-)
-print(res_bp)
-
-#! new method
-res_bp = calc_bubble_point_temperature(
-    components = [benzene, toluene],
-    pressure = pressure,
-    model_source = model_source_,
-)
-print(res_bp)
-
-# NOTE: modified raoult's law
-res_bp = vle.bubble_temperature(
-    inputs = inputs,
-    equilibrium_model = 'modified-raoult',
-    activity_model = 'NRTL',
-    activity_inputs = activity_inputs)
-print(res_bp)
+console.log("bubble temperature (modified-raoult + NRTL)");
+console.log(
+  vle.bubble_temperature(inputs, "modified-raoult", null, "NRTL", "root", null, {
+    activity_inputs,
+  })
+);
