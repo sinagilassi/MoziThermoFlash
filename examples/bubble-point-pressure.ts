@@ -40,10 +40,10 @@ const coreComponents: Component[] = [
 ];
 
 console.log("bubble pressure (raoult)");
-// console.log(vle.bubble_pressure(inputs, "raoult"));
+console.log(vle.bubble_pressure(inputs, "raoult"));
 
 console.log("bubble pressure (core wrapper)");
-// console.log(calc_bubble_point_pressure(coreComponents, temperature, modelSource));
+console.log(calc_bubble_point_pressure(coreComponents, temperature, modelSource));
 
 console.log("bubble pressure (modified-raoult + NRTL)");
 console.log(

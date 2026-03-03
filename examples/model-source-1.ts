@@ -25,51 +25,48 @@ const benzeneData: RawThermoRecord[] = [
   { name: "Name", symbol: "Name", value: "benzene", unit: "N/A" },
   { name: "Formula", symbol: "Formula", value: "C6H6", unit: "N/A" },
   { name: "State", symbol: "State", value: "l", unit: "N/A" },
-  { name: "C1", symbol: "C1", value: 83.107, unit: "1" },
-  { name: "C2", symbol: "C2", value: -6486.2, unit: "1" },
-  { name: "C3", symbol: "C3", value: -9.2194, unit: "1" },
-  { name: "C4", symbol: "C4", value: 6.98e-6, unit: "1" },
-  { name: "C5", symbol: "C5", value: 2, unit: "1" },
+  { name: "A", symbol: "A", value: 4.72583, unit: "1" },
+  { name: "B", symbol: "B", value: 1660.652, unit: "1" },
+  { name: "C", symbol: "C", value: -1.461, unit: "1" },
 ];
 
 const tolueneData: RawThermoRecord[] = [
   { name: "Name", symbol: "Name", value: "toluene", unit: "N/A" },
   { name: "Formula", symbol: "Formula", value: "C7H8", unit: "N/A" },
   { name: "State", symbol: "State", value: "l", unit: "N/A" },
-  { name: "C1", symbol: "C1", value: 80.877, unit: "1" },
-  { name: "C2", symbol: "C2", value: -6902.0, unit: "1" },
-  { name: "C3", symbol: "C3", value: -9.62, unit: "1" },
-  { name: "C4", symbol: "C4", value: 7.2e-6, unit: "1" },
-  { name: "C5", symbol: "C5", value: 2, unit: "1" },
+  { name: "A", symbol: "A", value: 4.23679, unit: "1" },
+  { name: "B", symbol: "B", value: 1426.448, unit: "1" },
+  { name: "C", symbol: "C", value: -45.957, unit: "1" },
 ];
 
 const dataBlocks: RawThermoRecord[][] = [benzeneData, tolueneData];
 
+// SECTION: Vapor pressure
+// log10(P) = A − (B / (T + C))
+//     P = vapor pressure (bar)
+//     T = temperature (K)
+
 const vapourPressureEquation = createEq(
   {},
   {
-    C1: { name: "C1", symbol: "C1", unit: "1" },
-    C2: { name: "C2", symbol: "C2", unit: "1" },
-    C3: { name: "C3", symbol: "C3", unit: "1" },
-    C4: { name: "C4", symbol: "C4", unit: "1" },
-    C5: { name: "C5", symbol: "C5", unit: "1" },
+    A: { name: "A", symbol: "A", unit: "1" },
+    B: { name: "B", symbol: "B", unit: "1" },
+    C: { name: "C", symbol: "C", unit: "1" },
     T: { name: "temperature", symbol: "T", unit: "K" },
   },
   {
-    VaPr: { name: "vapor-pressure", symbol: "VaPr", unit: "Pa" },
+    VaPr: { name: "vapor-pressure", symbol: "VaPr", unit: "bar" },
   },
   (_params, args) => {
     const T = args.T.value;
-    const value = Math.exp(
-      args.C1.value +
-        args.C2.value / T +
-        args.C3.value * Math.log(T) +
-        args.C4.value * T ** args.C5.value
+    const value = Math.pow(
+      10,
+      args.A.value - args.B.value / (T + args.C.value)
     );
 
     return {
       value,
-      unit: "Pa",
+      unit: "bar",
       symbol: "VaPr",
     };
   },
