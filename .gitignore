@@ -46,3 +46,7 @@ Thumbs.db
 
 # PyThermoFlash-main folder
 PyThermoFlash-main/
+
+# md files
+flash_module_agent_guide_ts.md
+flash_solver_math_agent_guide_ts.md
