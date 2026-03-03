@@ -4,9 +4,7 @@ import {
     Source,
     type ArgInputMap,
     type ArgMap,
-    type ModelSource,
-    type DataSource,
-    type EquationSource
+    type ModelSource
 } from "mozithermodb";
 // ! LOCALS
 import { Equilibria } from "./equilibria";
@@ -15,13 +13,6 @@ type EquilibriumModel = "raoult" | "modified-raoult";
 type FugacityModel = "vdW" | "PR" | "RK" | "SRK" | null;
 type ActivityModel = "NRTL" | "UNIQUAC" | null;
 
-type ModelSourceLegacy = {
-    datasource?: Record<string, unknown>;
-    equationsource?: Record<string, unknown>;
-};
-
-type ModelSourceInput = ModelSourceLegacy | ModelSource | null;
-
 type ModelSelection = {
     equilibrium_model: string;
     fugacity_model: FugacityModel;
@@ -29,39 +20,35 @@ type ModelSelection = {
 };
 
 export class VLE extends Equilibria {
-    private readonly _modelSource: ModelSourceInput;
+    private readonly _modelSource: ModelSource | null;
     private readonly _source: Source;
 
-    constructor(components: string[], model_source: ModelSourceInput = null) {
-        const normalized = VLE.normalizeModelSource(model_source);
-
+    constructor(components: string[], model_source: ModelSource | null = null) {
         super(components, {
-            datasource: normalized.datasource,
-            equationsource: normalized.equationsource,
+            datasource: model_source?.dataSource ?? {},
+            equationsource: model_source?.equationSource ?? {},
         });
 
         this._modelSource = model_source;
         this._source = new Source(
             {
-                dataSource: normalized.datasource,
-                equationSource: normalized.equationsource,
-            } as any,
+                dataSource: model_source?.dataSource ?? {},
+                equationSource: model_source?.equationSource ?? {},
+            },
             "Name-State"
         );
     }
 
-    public get model_source(): ModelSourceInput {
+    public get model_source(): ModelSource | null {
         return this._modelSource;
     }
 
-    public get datasource(): Record<string, unknown> {
-        const normalized = VLE.normalizeModelSource(this._modelSource);
-        return normalized.datasource;
+    public get dataSource(): ModelSource["dataSource"] {
+        return this._modelSource?.dataSource ?? {};
     }
 
-    public get equationsource(): Record<string, unknown> {
-        const normalized = VLE.normalizeModelSource(this._modelSource);
-        return normalized.equationsource;
+    public get equationSource(): ModelSource["equationSource"] {
+        return this._modelSource?.equationSource ?? {};
     }
 
     public bubble_pressure(
@@ -503,26 +490,4 @@ export class VLE extends Equilibria {
         return converted;
     }
 
-    private static normalizeModelSource(modelSource: ModelSourceInput): {
-        datasource: Record<string, unknown>;
-        equationsource: Record<string, unknown>;
-    } {
-        if (!modelSource) {
-            return { datasource: {}, equationsource: {} };
-        }
-
-        const maybeLegacy = modelSource as ModelSourceLegacy;
-        if (maybeLegacy.datasource || maybeLegacy.equationsource) {
-            return {
-                datasource: (maybeLegacy.datasource ?? {}) as Record<string, unknown>,
-                equationsource: (maybeLegacy.equationsource ?? {}) as Record<string, unknown>,
-            };
-        }
-
-        const maybeModern = modelSource as ModelSource;
-        return {
-            datasource: (maybeModern.dataSource ?? {}) as Record<string, unknown>,
-            equationsource: (maybeModern.equationSource ?? {}) as Record<string, unknown>,
-        };
-    }
 }

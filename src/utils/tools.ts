@@ -6,7 +6,7 @@ import { ModelSource } from "mozithermodb";
  * Check if the model source is valid.
  *
  * @param modelSource - Model source parameters as an object with
- * `datasource` and `equationsource` dictionary members.
+ * `dataSource` and `equationSource` dictionary members.
  * @returns True if the model source is valid.
  */
 export function modelSourceChecker(modelSource: ModelSource): boolean {
@@ -14,24 +14,24 @@ export function modelSourceChecker(modelSource: ModelSource): boolean {
         if (
             typeof modelSource !== 'object' ||
             modelSource === null ||
-            !('datasource' in modelSource) ||
-            !('equationsource' in modelSource)
+            !('dataSource' in modelSource) ||
+            !('equationSource' in modelSource)
         ) {
-            throw new Error("Model source must be an object with 'datasource' and 'equationsource' keys.");
+            throw new Error("Model source must be an object with 'dataSource' and 'equationSource' keys.");
         }
 
         const source = modelSource as {
-            datasource: unknown;
-            equationsource: unknown;
+            dataSource: unknown;
+            equationSource: unknown;
         };
 
         if (
-            typeof source.datasource !== 'object' ||
-            source.datasource === null ||
-            typeof source.equationsource !== 'object' ||
-            source.equationsource === null
+            typeof source.dataSource !== 'object' ||
+            source.dataSource === null ||
+            typeof source.equationSource !== 'object' ||
+            source.equationSource === null
         ) {
-            throw new Error("'datasource' and 'equationsource' must be objects.");
+            throw new Error("'dataSource' and 'equationSource' must be objects.");
         }
 
         return true;

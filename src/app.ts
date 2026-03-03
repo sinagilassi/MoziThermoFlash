@@ -16,8 +16,8 @@ import { modelSourceChecker } from "@/utils";
  *
  * @remarks
  * The model source can be an object containing the following keys:
- * - `datasource`: The data source for the model.
- * - `equationsource`: The equation source for the model.
+ * - `dataSource`: The data source for the model.
+ * - `equationSource`: The equation source for the model.
  *
  * These two sources are generated with `PythermoDBLink`, please refer to the
  * documentation for more details.
@@ -26,8 +26,8 @@ import { modelSourceChecker } from "@/utils";
  * ```typescript
  * // model source example
  * const modelSource = {
- *   datasource: datasource,
- *   equationsource: equationsource
+ *   dataSource: dataSource,
+ *   equationSource: equationSource
  * };
  * ```
  */
