@@ -1,5 +1,7 @@
 import { to } from "mozicuc";
 import { Activity, type ActivityFactory } from "./activity";
+import { solveRachfordRice } from "../solvers/rachford-rice";
+import { solveSecant } from "../solvers/secant";
 
 type MoleFractionMap = Record<string, number>;
 type VaporPressureEntry = {
@@ -43,38 +45,6 @@ function normalize(values: number[]): number[] {
         throw new Error("Cannot normalize zero-sum vector.");
     }
     return values.map((value) => value / s);
-}
-
-function solveBySecant(
-    fn: (x: number) => number,
-    x0: number,
-    x1: number,
-    maxIter = 200,
-    tolerance = 1e-8
-): number {
-    let f0 = fn(x0);
-    let f1 = fn(x1);
-
-    for (let i = 0; i < maxIter; i += 1) {
-        const denom = f1 - f0;
-        if (Math.abs(denom) < EPS) {
-            return x1;
-        }
-
-        const x2 = x1 - (f1 * (x1 - x0)) / denom;
-        const f2 = fn(x2);
-
-        if (Math.abs(f2) < tolerance || Math.abs(x2 - x1) < tolerance) {
-            return x2;
-        }
-
-        x0 = x1;
-        f0 = f1;
-        x1 = x2;
-        f1 = f2;
-    }
-
-    return x1;
 }
 
 export class Equilibria {
@@ -277,7 +247,7 @@ export class Equilibria {
                 return f;
             };
 
-            const temperature = solveBySecant(objective, guessTemperature, guessTemperature + 2);
+            const temperature = solveSecant(objective, guessTemperature, guessTemperature + 2);
 
             const vaporPressure = this.computeVaporPressureAtTemperature(vaporPressureMap, temperature);
             const acCo = this.checkActivityCoefficients(
@@ -369,7 +339,7 @@ export class Equilibria {
                 return sum(xRaw) - 1;
             };
 
-            const dewTemperature = solveBySecant(objective, guessTemperature, guessTemperature + 2);
+            const dewTemperature = solveSecant(objective, guessTemperature, guessTemperature + 2);
             const kRatio = y.map((yi, i) => yi / Math.max(finalXi[i], EPS));
 
             return {
@@ -422,11 +392,11 @@ export class Equilibria {
 
             let acCo = new Array<number>(this._compNum).fill(1);
             let k = [...kBase];
-            let beta = this.solveRachfordRice(z, k);
+            let beta = solveRachfordRice(z, k);
 
             if (equilibriumModel === "modified-raoult") {
                 for (let iter = 0; iter < maxIter; iter += 1) {
-                    beta = this.solveRachfordRice(z, k);
+                    beta = solveRachfordRice(z, k);
                     const xRaw = z.map((zi, i) => zi / Math.max(1 + beta * (k[i] - 1), EPS));
                     const x = normalize(xRaw);
                     const xComp = this.moleFractionComp(x);
@@ -447,7 +417,7 @@ export class Equilibria {
                 }
             }
 
-            beta = this.solveRachfordRice(z, k);
+            beta = solveRachfordRice(z, k);
             const xy = this.xy_flash(beta, z, k, null);
             const x = xy.liquid;
             const y = xy.vapor;
@@ -613,43 +583,6 @@ export class Equilibria {
     private calDewPressure(y: number[], vaporPressure: number[]): number {
         const denominator = sum(y.map((yi, i) => yi / Math.max(vaporPressure[i], EPS)));
         return 1 / Math.max(denominator, EPS);
-    }
-
-    private solveRachfordRice(z: number[], k: number[]): number {
-        const f = (beta: number): number =>
-            sum(
-                z.map((zi, i) => {
-                    const term = 1 + beta * (k[i] - 1);
-                    return (zi * (k[i] - 1)) / Math.max(term, EPS);
-                })
-            );
-
-        const f0 = f(0);
-        const f1 = f(1);
-
-        if (f0 < 0) {
-            return 0;
-        }
-        if (f1 > 0) {
-            return 1;
-        }
-
-        let low = 0;
-        let high = 1;
-        for (let i = 0; i < 200; i += 1) {
-            const mid = 0.5 * (low + high);
-            const fm = f(mid);
-            if (Math.abs(fm) < 1e-10 || Math.abs(high - low) < 1e-10) {
-                return mid;
-            }
-            if (fm > 0) {
-                low = mid;
-            } else {
-                high = mid;
-            }
-        }
-
-        return 0.5 * (low + high);
     }
 
     private errorMessage(error: unknown): string {
