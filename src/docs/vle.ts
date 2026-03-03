@@ -1,5 +1,14 @@
+// import libs
 import { convertFromTo, to } from "mozicuc";
-import { Source, type ArgInputMap, type ArgMap, type ModelSource } from "mozithermodb";
+import {
+    Source,
+    type ArgInputMap,
+    type ArgMap,
+    type ModelSource,
+    type DataSource,
+    type EquationSource
+} from "mozithermodb";
+// ! LOCALS
 import { Equilibria } from "./equilibria";
 
 type EquilibriumModel = "raoult" | "modified-raoult";
