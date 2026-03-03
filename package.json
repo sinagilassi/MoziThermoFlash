@@ -1,7 +1,7 @@
 {
   "name": "mozithermoflash",
-  "version": "1.0.0",
-  "description": "TS",
+  "version": "0.1.0",
+  "description": "A TypeScript VLE toolkit for flash and phase-equilibrium calculations on multi-component mixtures.",
   "homepage": "https://github.com/sinagilassi/MoziThermoFlash#readme",
   "bugs": {
     "url": "https://github.com/sinagilassi/MoziThermoFlash/issues"
@@ -10,6 +10,14 @@
     "type": "git",
     "url": "git+https://github.com/sinagilassi/MoziThermoFlash.git"
   },
+  "keywords": [
+    "thermodynamics",
+    "bubble_point_pressure",
+    "bubble_point_temperature",
+    "dew_point_pressure",
+    "dew_point_temperature",
+    "flash_calculations"
+  ],
   "license": "Apache-2.0",
   "author": "Sina Gilassi",
   "type": "module",
