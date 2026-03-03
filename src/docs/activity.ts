@@ -1,5 +1,7 @@
 import { MoziMatrixData } from "mozithermodb";
 import type { Component } from "mozithermodb-settings";
+import { activity } from "mozithermomodels";
+
 
 export type NumericMatrix = number[][];
 export type MatrixSource = MoziMatrixData | NumericMatrix;
@@ -8,27 +10,27 @@ export type MoleFractionMap = Record<string, number>;
 type ActivityInputs = Record<string, unknown>;
 
 type NrtlModel = {
-    cal_tau_ij_M1(input: { temperature: number; dg_ij: NumericMatrix }): unknown;
-    cal_tau_ij_M2(input: {
-        temperature: number;
-        a_ij: NumericMatrix;
-        b_ij: NumericMatrix;
-        c_ij: NumericMatrix;
-        d_ij: NumericMatrix;
-    }): unknown;
-    cal(input: { model_input: Record<string, unknown> }): unknown;
+    cal_tau_ij_M1(temperature: number, dg_ij: NumericMatrix): unknown;
+    cal_tau_ij_M2(
+        temperature: number,
+        a_ij: NumericMatrix,
+        b_ij: NumericMatrix,
+        c_ij: NumericMatrix,
+        d_ij: NumericMatrix
+    ): unknown;
+    cal(model_input: Record<string, unknown>): unknown;
 };
 
 type UniquacModel = {
-    cal_tau_ij_M1(input: { temperature: number; dU_ij: NumericMatrix }): unknown;
-    cal_tau_ij_M2(input: {
-        temperature: number;
-        a_ij: NumericMatrix;
-        b_ij: NumericMatrix;
-        c_ij: NumericMatrix;
-        d_ij: NumericMatrix;
-    }): unknown;
-    cal(input: { model_input: Record<string, unknown> }): unknown;
+    cal_tau_ij_M1(temperature: number, dU_ij: NumericMatrix): unknown;
+    cal_tau_ij_M2(
+        temperature: number,
+        a_ij: NumericMatrix,
+        b_ij: NumericMatrix,
+        c_ij: NumericMatrix,
+        d_ij: NumericMatrix
+    ): unknown;
+    cal(model_input: Record<string, unknown>): unknown;
 };
 
 type ActivityRuntime = {
@@ -127,21 +129,12 @@ export class Activity {
                 const d_ij = this.resolveMatrixSource(d_ij_src, "d", components);
 
                 tau_ij = Activity.extractFirst<NumericMatrix>(
-                    activityNrtl.cal_tau_ij_M2({
-                        temperature,
-                        a_ij,
-                        b_ij,
-                        c_ij,
-                        d_ij,
-                    })
+                    activityNrtl.cal_tau_ij_M2(temperature, a_ij, b_ij, c_ij, d_ij)
                 );
             } else {
                 const dg_ij = this.resolveMatrixSource(dg_ij_src, "dg", components);
                 tau_ij = Activity.extractFirst<NumericMatrix>(
-                    activityNrtl.cal_tau_ij_M1({
-                        temperature,
-                        dg_ij,
-                    })
+                    activityNrtl.cal_tau_ij_M1(temperature, dg_ij)
                 );
             }
 
@@ -154,7 +147,7 @@ export class Activity {
             };
 
             const res = Activity.extractFirst<Record<string, unknown>>(
-                activityNrtl.cal({ model_input: inputs })
+                activityNrtl.cal(inputs)
             );
 
             return res;
@@ -220,21 +213,12 @@ export class Activity {
                 const d_ij = this.resolveMatrixSource(d_ij_src, "d", components);
 
                 tau_ij = Activity.extractFirst<NumericMatrix>(
-                    activityUniquac.cal_tau_ij_M2({
-                        temperature,
-                        a_ij,
-                        b_ij,
-                        c_ij,
-                        d_ij,
-                    })
+                    activityUniquac.cal_tau_ij_M2(temperature, a_ij, b_ij, c_ij, d_ij)
                 );
             } else {
                 const dU_ij = this.resolveMatrixSource(dU_ij_src, "dU", components);
                 tau_ij = Activity.extractFirst<NumericMatrix>(
-                    activityUniquac.cal_tau_ij_M1({
-                        temperature,
-                        dU_ij,
-                    })
+                    activityUniquac.cal_tau_ij_M1(temperature, dU_ij)
                 );
             }
 
@@ -246,7 +230,7 @@ export class Activity {
             };
 
             const res = Activity.extractFirst<Record<string, unknown>>(
-                activityUniquac.cal({ model_input: inputs })
+                activityUniquac.cal(inputs)
             );
 
             return res;
@@ -262,12 +246,24 @@ export class Activity {
         modelName: "NRTL" | "UNIQUAC",
         methodFactory?: ActivityFactory
     ): ActivityRuntime {
-        const factory = methodFactory ?? this.activityFactory;
-        if (!factory) {
-            throw new Error(
-                "No activity factory provided. Pass `activityFactory` in constructor or method options."
-            );
-        }
+        const factory =
+            methodFactory ??
+            this.activityFactory ??
+            ((input) => {
+                const core = activity({
+                    components: input.components,
+                    model_name: input.modelName,
+                    datasource: this.datasource ?? {},
+                    equationsource: this.equationsource ?? {},
+                });
+
+                if (input.modelName === "NRTL") {
+                    return { nrtl: core.nrtl as unknown as NrtlModel };
+                }
+
+                return { uniquac: core.uniquac as unknown as UniquacModel };
+            });
+
         return factory({ components, modelName });
     }
 

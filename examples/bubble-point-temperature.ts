@@ -6,9 +6,11 @@ import {
   benzene,
   toluene,
 } from "./model-source-1";
+import { createActivityFactory } from "./activity-factory";
 
 const components = ["benzene-l", "toluene-l"];
 const vle = new VLE(components, modelSource);
+const activityFactory = createActivityFactory();
 
 const activity_inputs = {
   alpha: [[0, 0.3], [0.3, 0]],
@@ -38,6 +40,9 @@ console.log(calc_bubble_point_temperature(coreComponents, pressure, modelSource)
 console.log("bubble temperature (modified-raoult + NRTL)");
 console.log(
   vle.bubble_temperature(inputs, "modified-raoult", null, "NRTL", "root", null, {
+    // activity_inputs are NRTL parameters only.
     activity_inputs,
+    // activityFactory provides the runtime model implementation.
+    activityFactory,
   })
 );

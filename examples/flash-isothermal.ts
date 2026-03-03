@@ -6,9 +6,11 @@ import {
   water,
   ethanol,
 } from "./model-source.2";
+import { createActivityFactory } from "./activity-factory";
 
 const components = ["water-l", "ethanol-l"];
 const vle = new VLE(components, modelSource);
+const activityFactory = createActivityFactory();
 
 const activity_inputs = {
   alpha: [[0, 0.3], [0.3, 0]],
@@ -56,6 +58,11 @@ console.log(
     "least_squares",
     false,
     null,
-    { activity_inputs }
+    {
+      // activity_inputs are NRTL parameters only.
+      activity_inputs,
+      // activityFactory provides the runtime model implementation.
+      activityFactory,
+    }
   )
 );

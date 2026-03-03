@@ -529,13 +529,28 @@ export class Equilibria {
     ): number[] {
         if (activityModel === "NRTL") {
             const res = this.activity.NRTL(this._components, xComp, temperature, kwargs);
-            return (res.value as number[]).map(Number);
+            return this.normalizeActivityValue((res as Record<string, unknown>).value, "NRTL");
         }
         if (activityModel === "UNIQUAC") {
             const res = this.activity.UNIQUAC(this._components, xComp, temperature, kwargs);
-            return (res.value as number[]).map(Number);
+            return this.normalizeActivityValue((res as Record<string, unknown>).value, "UNIQUAC");
         }
         return new Array<number>(this._compNum).fill(1);
+    }
+
+    private normalizeActivityValue(
+        value: unknown,
+        model: "NRTL" | "UNIQUAC"
+    ): number[] {
+        if (Array.isArray(value)) {
+            return value.map((item) => Number(item));
+        }
+        if (value && typeof value === "object") {
+            return this.set_calculated_activity_coefficient(value as Record<string, number>);
+        }
+        throw new Error(
+            `Invalid activity coefficient output from ${model}. Expected number[] or component-keyed object.`
+        );
     }
 
     private checkActivityCoefficients(
@@ -569,7 +584,22 @@ export class Equilibria {
                 throw new Error(`Missing vapor pressure equation for component '${component}'.`);
             }
 
-            const args = { ...(entry.args ?? {}), T: temperature };
+            const baseArgs = { ...(entry.args ?? {}) } as Record<string, unknown>;
+            const tSource = baseArgs.T as
+                | { value?: unknown; unit?: unknown; symbol?: unknown }
+                | undefined;
+            const tArg =
+                tSource && typeof tSource === "object"
+                    ? {
+                          ...tSource,
+                          value: temperature,
+                      }
+                    : {
+                          value: temperature,
+                          unit: "K",
+                          symbol: "T",
+                      };
+            const args = { ...baseArgs, T: tArg };
             const res = entry.equation.cal(args);
             const unitBlock = `${res.unit} => Pa`;
             return Number(to(res.value, unitBlock));
