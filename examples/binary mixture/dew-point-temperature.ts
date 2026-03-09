@@ -25,6 +25,12 @@ const inputs = {
   pressure: [101.3, "kPa"] as [number, string],
 };
 
+const dewTemperatureOptions = {
+  guess_temperature: 350,
+  max_iter: 600,
+  tolerance: 1e-8,
+};
+
 const pressure: Pressure = { value: 101.3, unit: "kPa" };
 const coreComponents: Component[] = [
   { ...benzene, mole_fraction: 0.26 },
@@ -32,7 +38,7 @@ const coreComponents: Component[] = [
 ];
 
 console.log("dew temperature (raoult)");
-console.log(vle.dew_temperature(inputs, "raoult", null, null, "fsolve"));
+console.log(vle.dew_temperature(inputs, "raoult", null, null, "fsolve", null, dewTemperatureOptions));
 
 console.log("dew temperature (core wrapper)");
 console.log(calc_dew_point_temperature(coreComponents, pressure, modelSource));
@@ -47,9 +53,8 @@ console.log(
     "least-squares",
     null,
     {
-      // activity_inputs are NRTL parameters only.
+      ...dewTemperatureOptions,
       activity_inputs,
-      // activityFactory provides the runtime model implementation.
       activityFactory,
     }
   )

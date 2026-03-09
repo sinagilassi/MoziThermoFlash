@@ -34,6 +34,8 @@ const inputs = {
 };
 
 const modifiedRaoultDewOptions = {
+  // Used by modified-raoult dew pressure iterations only.
+  // bubble_pressure is direct/algebraic in current internals.
   max_iter: 600,
   tolerance: 1e-8,
   activity_inputs,

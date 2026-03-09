@@ -30,6 +30,13 @@ const inputs = {
   temperature: [80, "C"] as [number, string],
 };
 
+const modifiedRaoultDewPressureOptions = {
+  max_iter: 600,
+  tolerance: 1e-8,
+  activity_inputs,
+  activityFactory,
+};
+
 const temperature: Temperature = { value: 80, unit: "C" };
 const coreComponents: Component[] = [
   { ...benzene, mole_fraction: 0.26 },
@@ -44,12 +51,7 @@ console.log(calc_dew_point_pressure(coreComponents, temperature, modelSource));
 
 console.log("dew pressure (modified-raoult + NRTL)");
 console.log(
-  vle.dew_pressure(inputs, "modified-raoult", null, "NRTL", null, {
-    // activity_inputs are NRTL parameters only.
-    activity_inputs,
-    // activityFactory provides the runtime model implementation.
-    activityFactory,
-  })
+  vle.dew_pressure(inputs, "modified-raoult", null, "NRTL", null, modifiedRaoultDewPressureOptions)
 );
 
 console.log("dew pressure (modified-raoult + explicit gamma)");

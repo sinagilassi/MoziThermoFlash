@@ -25,6 +25,10 @@ const inputs = {
   pressure: [101.3, "kPa"] as [number, string],
 };
 
+const bubbleTemperatureOptions = {
+  guess_temperature: 350,
+};
+
 const pressure: Pressure = { value: 101.3, unit: "kPa" };
 const coreComponents: Component[] = [
   { ...benzene, mole_fraction: 0.26 },
@@ -32,7 +36,7 @@ const coreComponents: Component[] = [
 ];
 
 console.log("bubble temperature (raoult)");
-console.log(vle.bubble_temperature(inputs, "raoult"));
+console.log(vle.bubble_temperature(inputs, "raoult", null, null, "root", null, bubbleTemperatureOptions));
 
 console.log("bubble temperature (core wrapper)");
 console.log(calc_bubble_point_temperature(coreComponents, pressure, modelSource));
@@ -40,9 +44,8 @@ console.log(calc_bubble_point_temperature(coreComponents, pressure, modelSource)
 console.log("bubble temperature (modified-raoult + NRTL)");
 console.log(
   vle.bubble_temperature(inputs, "modified-raoult", null, "NRTL", "root", null, {
-    // activity_inputs are NRTL parameters only.
+    ...bubbleTemperatureOptions,
     activity_inputs,
-    // activityFactory provides the runtime model implementation.
     activityFactory,
   })
 );
