@@ -26,6 +26,18 @@ const inputs = {
   pressure: [7.0, "kPa"] as [number, string],
 };
 
+const raoultFlashSolverOptions = {
+  max_iter: 300,
+  tolerance: 1e-8,
+};
+
+const modifiedRaoultFlashSolverOptions = {
+  max_iter: 500,
+  tolerance: 1e-9,
+  activity_inputs,
+  activityFactory,
+};
+
 const temperature: Temperature = { value: 30, unit: "C" };
 const pressure: Pressure = { value: 7, unit: "kPa" };
 const coreComponents: Component[] = [
@@ -45,8 +57,40 @@ console.log(vle.flash_isothermal(inputs));
 console.log("flash isothermal (core wrapper)");
 console.log(calc_isothermal_flash(coreComponents, temperature, pressure, modelSource));
 
+console.log("flash isothermal (core wrapper + solver options, raoult)");
+console.log(
+  calc_isothermal_flash(
+    coreComponents,
+    temperature,
+    pressure,
+    modelSource,
+    "raoult",
+    "SRK",
+    "NRTL",
+    "Name-State",
+    "least_squares",
+    false,
+    null,
+    raoultFlashSolverOptions
+  )
+);
+
 console.log("flash isothermal (class, minimize)");
-console.log(vle.flash_isothermal(inputs, "raoult", "SRK", "NRTL", "minimize"));
+console.log(vle.flash_isothermal(inputs, "raoult", null, null, "minimize"));
+
+console.log("flash isothermal (class, minimize + solver options)");
+console.log(
+  vle.flash_isothermal(
+    inputs,
+    "raoult",
+    null,
+    null,
+    "minimize",
+    false,
+    null,
+    raoultFlashSolverOptions
+  )
+);
 
 console.log("flash isothermal (modified-raoult + NRTL)");
 console.log(
@@ -58,11 +102,6 @@ console.log(
     "least_squares",
     false,
     null,
-    {
-      // activity_inputs are NRTL parameters only.
-      activity_inputs,
-      // activityFactory provides the runtime model implementation.
-      activityFactory,
-    }
+    modifiedRaoultFlashSolverOptions
   )
 );

@@ -33,6 +33,13 @@ const inputs = {
   temperature: [80, "C"] as [number, string],
 };
 
+const modifiedRaoultDewOptions = {
+  max_iter: 600,
+  tolerance: 1e-8,
+  activity_inputs,
+  activityFactory,
+};
+
 const temperature: Temperature = { value: 80, unit: "C" };
 const coreComponents: Component[] = [
   { ...benzene, mole_fraction: 0.26 },
@@ -44,14 +51,14 @@ console.log(vle.bubble_pressure(inputs, "raoult"));
 
 console.log("bubble pressure (core wrapper)");
 console.log(calc_bubble_point_pressure(coreComponents, temperature, modelSource));
+// bubble_pressure is direct/algebraic in the current implementation.
+// There is no root solver configuration to tune here.
 
 console.log("bubble pressure (modified-raoult + NRTL)");
 console.log(
   vle.bubble_pressure(inputs, "modified-raoult", null, "NRTL", null, {
-    // activity_inputs are NRTL parameters only.
     activity_inputs,
-    // activityFactory provides the runtime model implementation.
-    // activityFactory,
+    activityFactory,
   })
 );
 
@@ -68,13 +75,25 @@ console.log(vle.dew_pressure(inputs, "raoult"));
 console.log("dew pressure (core wrapper)");
 console.log(calc_dew_point_pressure(coreComponents, temperature, modelSource));
 
+console.log("dew pressure (modified-raoult + solver options)");
+console.log(
+  calc_dew_point_pressure(
+    coreComponents,
+    temperature,
+    modelSource,
+    "modified-raoult",
+    null,
+    "NRTL",
+    "Name-State",
+    null,
+    modifiedRaoultDewOptions
+  )
+);
+
 console.log("dew pressure (modified-raoult + NRTL)");
 console.log(
   vle.dew_pressure(inputs, "modified-raoult", null, "NRTL", null, {
-    // activity_inputs are NRTL parameters only.
-    activity_inputs,
-    // activityFactory provides the runtime model implementation.
-    // activityFactory,
+    ...modifiedRaoultDewOptions,
   })
 );
 
