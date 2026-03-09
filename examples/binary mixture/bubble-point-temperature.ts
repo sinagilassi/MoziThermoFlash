@@ -1,11 +1,11 @@
-import { VLE } from "../src/docs";
-import { calc_dew_point_temperature } from "../src/core/main";
+import { VLE } from "../../src/docs";
+import { calc_bubble_point_temperature } from "../../src/core/main";
 import { type Component, type Pressure } from "mozithermodb-settings";
 import {
   model_source_ as modelSource,
   benzene,
   toluene,
-} from "./model-source-1";
+} from "../model-source-1";
 import { createActivityFactory } from "./activity-factory";
 
 const components = ["benzene-l", "toluene-l"];
@@ -31,26 +31,18 @@ const coreComponents: Component[] = [
   { ...toluene, mole_fraction: 0.74 },
 ];
 
-console.log("dew temperature (raoult)");
-console.log(vle.dew_temperature(inputs, "raoult", null, null, "fsolve"));
+console.log("bubble temperature (raoult)");
+console.log(vle.bubble_temperature(inputs, "raoult"));
 
-console.log("dew temperature (core wrapper)");
-console.log(calc_dew_point_temperature(coreComponents, pressure, modelSource));
+console.log("bubble temperature (core wrapper)");
+console.log(calc_bubble_point_temperature(coreComponents, pressure, modelSource));
 
-console.log("dew temperature (modified-raoult + NRTL)");
+console.log("bubble temperature (modified-raoult + NRTL)");
 console.log(
-  vle.dew_temperature(
-    inputs,
-    "modified-raoult",
-    null,
-    "NRTL",
-    "least-squares",
-    null,
-    {
-      // activity_inputs are NRTL parameters only.
-      activity_inputs,
-      // activityFactory provides the runtime model implementation.
-      activityFactory,
-    }
-  )
+  vle.bubble_temperature(inputs, "modified-raoult", null, "NRTL", "root", null, {
+    // activity_inputs are NRTL parameters only.
+    activity_inputs,
+    // activityFactory provides the runtime model implementation.
+    activityFactory,
+  })
 );

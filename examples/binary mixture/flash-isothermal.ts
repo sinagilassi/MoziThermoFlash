@@ -1,11 +1,11 @@
-import { VLE } from "../src/docs";
-import { calc_isothermal_flash, is_flashable } from "../src/core/main";
+import { VLE } from "../../src/docs";
+import { calc_isothermal_flash, is_flashable } from "../../src/core/main";
 import { type Component, type Pressure, type Temperature } from "mozithermodb-settings";
 import {
   model_source_ as modelSource,
   water,
   ethanol,
-} from "./model-source.2";
+} from "../model-source.2";
 import { createActivityFactory } from "./activity-factory";
 
 const components = ["water-l", "ethanol-l"];

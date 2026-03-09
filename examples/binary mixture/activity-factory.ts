@@ -1,4 +1,4 @@
-import type { ActivityFactory } from "../src/docs/activity";
+import type { ActivityFactory } from "../../src/docs/activity";
 import { activities } from "mozithermomodels";
 
 export function createActivityFactory(): ActivityFactory {

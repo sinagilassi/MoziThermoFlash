@@ -1,14 +1,11 @@
-import { VLE } from "../src/docs";
-import {
-  calc_bubble_point_pressure,
-  calc_dew_point_pressure,
-} from "../src/core/main";
+import { VLE } from "../../src/docs";
+import { calc_dew_point_pressure } from "../../src/core/main";
 import { type Component, type Temperature } from "mozithermodb-settings";
 import {
   model_source_ as modelSource,
   benzene,
   toluene,
-} from "./model-source-1";
+} from "../model-source-1";
 import { createActivityFactory } from "./activity-factory";
 
 const components = ["benzene-l", "toluene-l"];
@@ -39,29 +36,6 @@ const coreComponents: Component[] = [
   { ...toluene, mole_fraction: 0.74 },
 ];
 
-console.log("bubble pressure (raoult)");
-console.log(vle.bubble_pressure(inputs, "raoult"));
-
-console.log("bubble pressure (core wrapper)");
-console.log(calc_bubble_point_pressure(coreComponents, temperature, modelSource));
-
-console.log("bubble pressure (modified-raoult + NRTL)");
-console.log(
-  vle.bubble_pressure(inputs, "modified-raoult", null, "NRTL", null, {
-    // activity_inputs are NRTL parameters only.
-    activity_inputs,
-    // activityFactory provides the runtime model implementation.
-    // activityFactory,
-  })
-);
-
-console.log("bubble pressure (modified-raoult + explicit gamma)");
-console.log(
-  vle.bubble_pressure(inputs, "modified-raoult", null, "NRTL", null, {
-    activity_coefficients,
-  })
-);
-
 console.log("dew pressure (raoult)");
 console.log(vle.dew_pressure(inputs, "raoult"));
 
@@ -74,7 +48,7 @@ console.log(
     // activity_inputs are NRTL parameters only.
     activity_inputs,
     // activityFactory provides the runtime model implementation.
-    // activityFactory,
+    activityFactory,
   })
 );
 
