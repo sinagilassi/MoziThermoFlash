@@ -1,6 +1,6 @@
 {
   "name": "mozithermoflash",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A TypeScript VLE toolkit for flash and phase-equilibrium calculations on multi-component mixtures.",
   "homepage": "https://github.com/sinagilassi/MoziThermoFlash#readme",
   "bugs": {
