@@ -42,6 +42,8 @@ export function setFeedSpecification(
                 feedSpec[`${name_}-${state_}`] = component.mole_fraction;
             } else if (normalizedKey === 'formula-state') {
                 feedSpec[`${formula_}-${state_}`] = component.mole_fraction;
+            } else if (normalizedKey === 'name-formula') {
+                feedSpec[`${name_}-${formula_}`] = component.mole_fraction;
             } else if (normalizedKey === 'name') {
                 feedSpec[name_] = component.mole_fraction;
             } else if (normalizedKey === 'formula') {
