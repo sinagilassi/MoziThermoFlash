@@ -5,7 +5,7 @@ import {
   model_source_ as modelSource,
   water,
   ethanol,
-} from "../model-source.2";
+} from "../model-source-3";
 import { createActivityFactory } from "./activity-factory";
 
 const components = ["water-l", "ethanol-l"];
@@ -22,8 +22,8 @@ const activity_inputs = {
 
 const inputs = {
   mole_fraction: { "water-l": 0.5, "ethanol-l": 0.5 },
-  temperature: [30.0, "C"] as [number, string],
-  pressure: [7.0, "kPa"] as [number, string],
+  temperature: [30, "C"] as [number, string],
+  pressure: [7, "kPa"] as [number, string],
 };
 
 const raoultFlashSolverOptions = {
