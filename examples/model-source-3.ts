@@ -35,15 +35,16 @@ const waterData: RawThermoRecord[] = [
 ];
 
 // 364.8 to 513.91	4.92531	1432.526	-61.819
+// 292.77 to 366.63	5.24677	1598.673	-46.424
 const ethanolData: RawThermoRecord[] = [
   { name: "Name", symbol: "Name", value: "ethanol", unit: "N/A" },
   { name: "Formula", symbol: "Formula", value: "C2H6O", unit: "N/A" },
   { name: "State", symbol: "State", value: "l", unit: "N/A" },
-  { name: "A", symbol: "A", value: 4.92531, unit: "1" },
-  { name: "B", symbol: "B", value: 1432.526, unit: "1" },
-  { name: "C", symbol: "C", value: -61.819, unit: "1" },
-  { name: "Tmin", symbol: "Tmin", value: 364.8, unit: "K" },
-  { name: "Tmax", symbol: "Tmax", value: 513.91, unit: "K" },
+  { name: "A", symbol: "A", value: 5.24677, unit: "1" },
+  { name: "B", symbol: "B", value: 1598.673, unit: "1" },
+  { name: "C", symbol: "C", value: -46.424, unit: "1" },
+  { name: "Tmin", symbol: "Tmin", value: 292.77, unit: "K" },
+  { name: "Tmax", symbol: "Tmax", value: 366.63, unit: "K" },
 ];
 
 const dataBlocks: RawThermoRecord[][] = [waterData, ethanolData];

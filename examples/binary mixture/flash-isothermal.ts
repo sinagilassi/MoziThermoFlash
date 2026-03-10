@@ -26,14 +26,26 @@ const inputs = {
   pressure: [7, "kPa"] as [number, string],
 };
 
-const raoultFlashSolverOptions = {
+const raoultFlashSolverOptionsTight = {
   max_iter: 300,
-  tolerance: 1e-8,
+  tolerance: 1e-10,
+  k_min: 1e-12,
+  k_max: 1e12,
 };
 
-const modifiedRaoultFlashSolverOptions = {
+const raoultFlashSolverOptionsLoose = {
+  max_iter: 80,
+  tolerance: 1e-6,
+  k_min: 1e-10,
+  k_max: 1e10,
+};
+
+const modifiedRaoultFlashSolverOptionsStable = {
   max_iter: 500,
   tolerance: 1e-9,
+  damping_lambda: 0.2,
+  k_min: 1e-12,
+  k_max: 1e12,
   activity_inputs,
   activityFactory,
 };
@@ -53,7 +65,7 @@ console.log(is_flashable(coreComponents, temperature, pressure, modelSource));
 
 const flashability = vle.is_flashable(inputs);
 console.log(
-  "quick flashability check (expect two-phase):",
+  "quick flashability check:",
   flashability.flash_checker_res ? "flashable" : "not flashable"
 );
 
@@ -63,7 +75,7 @@ console.log(vle.flash_isothermal(inputs));
 console.log("flash isothermal (core wrapper)");
 console.log(calc_isothermal_flash(coreComponents, temperature, pressure, modelSource));
 
-console.log("flash isothermal (core wrapper + solver options, raoult)");
+console.log("flash isothermal (core wrapper + tight options, raoult)");
 console.log(
   calc_isothermal_flash(
     coreComponents,
@@ -77,7 +89,25 @@ console.log(
     "least_squares",
     false,
     null,
-    raoultFlashSolverOptions
+    raoultFlashSolverOptionsTight
+  )
+);
+
+console.log("flash isothermal (core wrapper + loose options, raoult)");
+console.log(
+  calc_isothermal_flash(
+    coreComponents,
+    temperature,
+    pressure,
+    modelSource,
+    "raoult",
+    "SRK",
+    "NRTL",
+    "Name-State",
+    "least_squares",
+    false,
+    null,
+    raoultFlashSolverOptionsLoose
   )
 );
 
@@ -94,11 +124,11 @@ console.log(
     "minimize",
     false,
     null,
-    raoultFlashSolverOptions
+    raoultFlashSolverOptionsLoose
   )
 );
 
-console.log("flash isothermal (modified-raoult + NRTL)");
+console.log("flash isothermal (modified-raoult + NRTL + stable options)");
 console.log(
   vle.flash_isothermal(
     inputs,
@@ -108,6 +138,6 @@ console.log(
     "least_squares",
     false,
     null,
-    modifiedRaoultFlashSolverOptions
+    modifiedRaoultFlashSolverOptionsStable
   )
 );
