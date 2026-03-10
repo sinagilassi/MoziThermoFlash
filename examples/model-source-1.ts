@@ -28,6 +28,8 @@ const benzeneData: RawThermoRecord[] = [
   { name: "A", symbol: "A", value: 4.72583, unit: "1" },
   { name: "B", symbol: "B", value: 1660.652, unit: "1" },
   { name: "C", symbol: "C", value: -1.461, unit: "1" },
+  { name: "Tmin", symbol: "Tmin", value: 334, unit: "K" },
+  { name: "Tmax", symbol: "Tmax", value: 373, unit: "K" },
 ];
 
 const tolueneData: RawThermoRecord[] = [
@@ -37,6 +39,8 @@ const tolueneData: RawThermoRecord[] = [
   { name: "A", symbol: "A", value: 4.23679, unit: "1" },
   { name: "B", symbol: "B", value: 1426.448, unit: "1" },
   { name: "C", symbol: "C", value: -45.957, unit: "1" },
+  { name: "Tmin", symbol: "Tmin", value: 273, unit: "K" },
+  { name: "Tmax", symbol: "Tmax", value: 298, unit: "K" },
 ];
 
 const dataBlocks: RawThermoRecord[][] = [benzeneData, tolueneData];

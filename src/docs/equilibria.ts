@@ -561,14 +561,14 @@ export class Equilibria {
             const tArg =
                 tSource && typeof tSource === "object"
                     ? {
-                          ...tSource,
-                          value: temperature,
-                      }
+                        ...tSource,
+                        value: temperature,
+                    }
                     : {
-                          value: temperature,
-                          unit: "K",
-                          symbol: "T",
-                      };
+                        value: temperature,
+                        unit: "K",
+                        symbol: "T",
+                    };
             const args = { ...baseArgs, T: tArg };
             const res = entry.equation.cal(args);
             const unitBlock = `${res.unit} => Pa`;
