@@ -22,15 +22,16 @@ const ethanol = ComponentSchema.parse({
 const components: Component[] = [water, ethanol];
 
 // 379. to 573.	3.55959	643.748	-198.043
+// 293. to 343 6.20963	2354.731	7.559
 const waterData: RawThermoRecord[] = [
   { name: "Name", symbol: "Name", value: "water", unit: "N/A" },
   { name: "Formula", symbol: "Formula", value: "H2O", unit: "N/A" },
   { name: "State", symbol: "State", value: "l", unit: "N/A" },
-  { name: "A", symbol: "A", value: 3.55959, unit: "1" },
-  { name: "B", symbol: "B", value: 643.748, unit: "1" },
-  { name: "C", symbol: "C", value: -198.043, unit: "1" },
-  { name: "Tmin", symbol: "Tmin", value: 379, unit: "K" },
-  { name: "Tmax", symbol: "Tmax", value: 573, unit: "K" },
+  { name: "A", symbol: "A", value: 6.20963, unit: "1" },
+  { name: "B", symbol: "B", value: 2354.731, unit: "1" },
+  { name: "C", symbol: "C", value: 7.559, unit: "1" },
+  { name: "Tmin", symbol: "Tmin", value: 293, unit: "K" },
+  { name: "Tmax", symbol: "Tmax", value: 343, unit: "K" },
 ];
 
 // 364.8 to 513.91	4.92531	1432.526	-61.819

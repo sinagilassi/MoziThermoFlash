@@ -312,6 +312,12 @@ export interface FlashIsothermalResult {
 
     solver_method?: string | null;
     solver_message?: string | null;
+    phase?: "L" | "V" | "VL" | null;
+    converged?: boolean | null;
+    iterations?: {
+        outer: number;
+        inner: number;
+    } | null;
 
     message: string;
     computation_time: Quantity<number> | null;

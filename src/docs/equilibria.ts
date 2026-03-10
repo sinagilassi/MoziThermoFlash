@@ -47,6 +47,42 @@ function normalize(values: number[]): number[] {
     return values.map((value) => value / s);
 }
 
+function clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+}
+
+function maxAbsLogDiff(a: number[], b: number[]): number {
+    if (a.length !== b.length) {
+        throw new Error("maxAbsLogDiff(): vector size mismatch");
+    }
+
+    let maxDiff = 0;
+    for (let i = 0; i < a.length; i += 1) {
+        const diff = Math.abs(Math.log(a[i]) - Math.log(b[i]));
+        if (diff > maxDiff) {
+            maxDiff = diff;
+        }
+    }
+    return maxDiff;
+}
+
+function dampLogSpace(
+    oldK: number[],
+    newK: number[],
+    lambda: number,
+    kMin: number,
+    kMax: number
+): number[] {
+    if (oldK.length !== newK.length) {
+        throw new Error("dampLogSpace(): vector size mismatch");
+    }
+    const lam = clamp(lambda, 0, 1);
+    return oldK.map((oldValue, i) => {
+        const nextValue = Math.exp((1 - lam) * Math.log(oldValue) + lam * Math.log(newK[i]));
+        return clamp(nextValue, kMin, kMax);
+    });
+}
+
 export class Equilibria {
     private readonly _components: string[];
     private readonly _compNum: number;
@@ -377,7 +413,7 @@ export class Equilibria {
 
     public _IFL(params: Record<string, any>, kwargs: Record<string, any> = {}): Record<string, any> {
         try {
-            const z = (params.mole_fraction as number[]).map(Number);
+            const z = normalize((params.mole_fraction as number[]).map(Number));
             const pressure = Number(params.pressure?.value);
             const temperature = Number(params.temperature?.value);
             const equilibriumModel = params.equilibrium_model as EquilibriumModel;
@@ -386,19 +422,45 @@ export class Equilibria {
 
             const maxIter = Number(kwargs.max_iter ?? 300);
             const tolerance = Number(kwargs.tolerance ?? 1e-8);
+            const kMin = Number(kwargs.k_min ?? 1e-12);
+            const kMax = Number(kwargs.k_max ?? 1e12);
+            const dampingLambda = Number(kwargs.damping_lambda ?? 0.3);
 
             const vaporPressure = this.computeVaporPressureAtTemperature(vaporPressureMap, temperature);
-            const kBase = vaporPressure.map((value) => value / Math.max(pressure, EPS));
+            const kBase = vaporPressure.map((value) =>
+                clamp(value / Math.max(pressure, EPS), kMin, kMax)
+            );
 
             let acCo = new Array<number>(this._compNum).fill(1);
             let k = [...kBase];
-            let beta = solveRachfordRice(z, k);
+            let beta = 0;
+            let phase: "L" | "V" | "VL" = "VL";
+            let rrIterations = 0;
+            let outerIterations = 0;
+            let converged = true;
+            let solverMessage = "Rachford-Rice convergence achieved.";
 
             if (equilibriumModel === "modified-raoult") {
-                for (let iter = 0; iter < maxIter; iter += 1) {
-                    beta = solveRachfordRice(z, k);
-                    const xRaw = z.map((zi, i) => zi / Math.max(1 + beta * (k[i] - 1), EPS));
-                    const x = normalize(xRaw);
+                converged = false;
+                for (let iter = 1; iter <= maxIter; iter += 1) {
+                    outerIterations = iter;
+
+                    const rr = solveRachfordRice(z, k, {
+                        maxIter,
+                        tolerance,
+                    });
+                    rrIterations += rr.iterations;
+                    beta = rr.beta;
+                    phase = rr.phase;
+
+                    if (phase !== "VL") {
+                        converged = true;
+                        solverMessage = `Single-phase state detected (${phase}).`;
+                        break;
+                    }
+
+                    const flash = this.xy_flash(beta, z, k, null);
+                    const x = flash.liquid;
                     const xComp = this.moleFractionComp(x);
                     const acNew = this.checkActivityCoefficients(
                         activityModel,
@@ -406,21 +468,41 @@ export class Equilibria {
                         temperature,
                         kwargs
                     );
-                    const kNew = kBase.map((value, i) => value * acNew[i]);
+                    const kNew = kBase.map((value, i) => clamp(value * acNew[i], kMin, kMax));
+                    const residualK = maxAbsLogDiff(k, kNew);
 
-                    const converged = k.every((value, i) => Math.abs(value - kNew[i]) < tolerance);
-                    k = kNew;
                     acCo = acNew;
-                    if (converged) {
+                    if (residualK < tolerance) {
+                        k = kNew;
+                        converged = true;
+                        solverMessage = "Modified-Raoult outer loop converged.";
                         break;
                     }
+
+                    k = dampLogSpace(k, kNew, dampingLambda, kMin, kMax);
+                }
+
+                if (!converged) {
+                    solverMessage = "Modified-Raoult outer loop reached max iterations.";
                 }
             }
 
-            beta = solveRachfordRice(z, k);
-            const xy = this.xy_flash(beta, z, k, null);
-            const x = xy.liquid;
-            const y = xy.vapor;
+            const rrFinal = solveRachfordRice(z, k, {
+                maxIter,
+                tolerance,
+            });
+            rrIterations += rrFinal.iterations;
+            beta = rrFinal.beta;
+            phase = rrFinal.phase;
+
+            let x = [...z];
+            let y = [...z];
+
+            if (phase === "VL") {
+                const xy = this.xy_flash(beta, z, k, null);
+                x = xy.liquid;
+                y = xy.vapor;
+            }
 
             if (equilibriumModel === "modified-raoult") {
                 acCo = this.checkActivityCoefficients(
@@ -451,7 +533,13 @@ export class Equilibria {
                     unit: "dimensionless",
                     symbol: "AcCo",
                 },
-                solver_message: "Rachford-Rice convergence achieved.",
+                solver_message: solverMessage,
+                phase,
+                converged: rrFinal.converged && converged,
+                iterations: {
+                    outer: outerIterations,
+                    inner: rrIterations,
+                },
             };
         } catch (error) {
             throw new Error(`flash isothermal failed! ${this.errorMessage(error)}`);
@@ -470,13 +558,18 @@ export class Equilibria {
             const y = new Array<number>(this._compNum).fill(0);
 
             for (let i = 0; i < this._compNum; i += 1) {
-                x[i] = z[i] / Math.max(1 + vF_ratio * (kRatio[i] * gamma[i] - 1), EPS);
-                y[i] = kRatio[i] * gamma[i] * x[i];
+                const kEff = kRatio[i] * gamma[i];
+                const denominator = 1 + vF_ratio * (kEff - 1);
+                if (denominator <= EPS) {
+                    throw new Error(`Invalid flash denominator at index ${i}.`);
+                }
+                x[i] = z[i] / denominator;
+                y[i] = kEff * x[i];
             }
 
             return {
-                liquid: x,
-                vapor: y,
+                liquid: normalize(x),
+                vapor: normalize(y),
             };
         } catch (error) {
             throw new Error(`Error in xy_flash calculation: ${this.errorMessage(error)}`);

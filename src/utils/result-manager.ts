@@ -216,6 +216,9 @@ function _preparePressureResultStructure(
         const solverMessage = data['solver_message'] ?? null;
         const flashChecker = data['flash_checker'] ?? null;
         const flashCheckerRes = data['flash_checker_res'] ?? null;
+        const phase = data['phase'] ?? null;
+        const converged = data['converged'] ?? null;
+        const iterations = data['iterations'] ?? null;
 
         // SECTION: component properties
         const componentProps: ComponentProps[] = [];
@@ -372,6 +375,9 @@ function _preparePressureResultStructure(
                 flash_checker_res: flashCheckerRes,
                 solver_method: solverMethod,
                 solver_message: solverMessage,
+                phase: phase,
+                converged: converged,
+                iterations: iterations,
                 message: message,
                 computation_time: computationTime,
             } as FlashIsothermalResult;

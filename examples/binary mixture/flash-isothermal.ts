@@ -51,6 +51,12 @@ console.log(vle.is_flashable(inputs));
 console.log("is flashable (core wrapper)");
 console.log(is_flashable(coreComponents, temperature, pressure, modelSource));
 
+const flashability = vle.is_flashable(inputs);
+console.log(
+  "quick flashability check (expect two-phase):",
+  flashability.flash_checker_res ? "flashable" : "not flashable"
+);
+
 console.log("flash isothermal (class, least_squares)");
 console.log(vle.flash_isothermal(inputs));
 
